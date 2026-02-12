@@ -1,0 +1,184 @@
+import { useState, useCallback, memo } from 'react'
+
+const TimeSlot = memo(function TimeSlot({
+  slotKey,
+  time,
+  players,
+  comment,
+  finalizedInfo,
+  currentPlayer,
+  onSetComment,
+  onToggleFinalized,
+  isInSelection,
+  registerRef,
+  isLastSlot,
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const [showComment, setShowComment] = useState(false)
+  const [commentText, setCommentText] = useState(comment || '')
+
+  const playerCount = players.length
+  const isMatch = playerCount >= 4
+  const isFinalized = !!finalizedInfo
+  const isSignedUp = players.includes(currentPlayer)
+  const isHalfHour = time.endsWith(':30')
+
+  // Callback ref for drag selection positioning
+  const refCallback = useCallback((el) => {
+    if (registerRef) registerRef(slotKey, el)
+  }, [registerRef, slotKey])
+
+  function handleCommentSave() {
+    onSetComment(slotKey, commentText)
+    setShowComment(false)
+  }
+
+  function handleFinalize(e) {
+    e.stopPropagation()
+    onToggleFinalized(slotKey, currentPlayer)
+  }
+
+  // Background / border styling
+  let bgClass = 'bg-white border-gray-100'
+  if (isInSelection) {
+    bgClass = 'bg-padel-blue/15 border-padel-blue ring-2 ring-padel-blue/40'
+  } else if (isFinalized) {
+    bgClass = 'bg-padel-blue/10 border-padel-blue/40'
+  } else if (isMatch) {
+    bgClass = 'bg-padel-green/10 border-padel-green/40'
+  } else if (isSignedUp) {
+    bgClass = 'bg-padel-green/5 border-padel-green/20'
+  } else if (playerCount > 0) {
+    bgClass = 'bg-amber-50 border-amber-200/50'
+  }
+
+  return (
+    <div
+      ref={refCallback}
+      data-slot-key={slotKey}
+      className={`border rounded-lg transition-all ${bgClass} ${isHalfHour ? 'border-l-2 border-l-gray-200/60' : 'border-l-4 border-l-padel-blue/30'}`}
+    >
+      {/* Compact row - always visible */}
+      <div className="flex items-center gap-2 px-2.5 py-2">
+        {/* Time */}
+        <span className={`font-mono text-xs w-11 shrink-0 ${isHalfHour ? 'text-gray-400 font-normal' : 'text-padel-blue font-bold'}`}>
+          {time}
+        </span>
+
+        {/* Player chips - inline */}
+        <div className="flex flex-wrap gap-1 flex-1 min-w-0">
+          {players.map(name => (
+            <span
+              key={name}
+              className={`
+                text-[10px] px-2 py-0.5 rounded-full font-medium truncate max-w-[80px]
+                ${name === currentPlayer
+                  ? 'bg-padel-green text-white'
+                  : 'bg-gray-100 text-gray-600'
+                }
+              `}
+            >
+              {name}
+            </span>
+          ))}
+          {playerCount === 0 && !isFinalized && (
+            <span className="text-[10px] text-gray-300 italic">Vrij</span>
+          )}
+        </div>
+
+        {/* Badges + count */}
+        <div className="flex items-center gap-1 shrink-0">
+          {comment && !expanded && (
+            <span className="text-[10px]">💬</span>
+          )}
+          {isFinalized && (
+            <span className="text-[8px] bg-padel-blue text-white px-1.5 py-0.5 rounded-full font-bold leading-none">
+              DEF
+            </span>
+          )}
+          {isMatch && !isFinalized && (
+            <span className="text-[8px] bg-padel-green text-white px-1.5 py-0.5 rounded-full font-bold leading-none animate-pulse">
+              MATCH
+            </span>
+          )}
+          <span className={`text-[10px] font-medium w-5 text-right ${playerCount >= 4 ? 'text-padel-green-dark' : 'text-gray-300'}`}>
+            {playerCount}/4
+          </span>
+
+          {/* Expand toggle */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
+            className="text-gray-300 hover:text-gray-500 text-[10px] p-0.5 transition-colors"
+          >
+            {expanded ? '▲' : '▼'}
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded details */}
+      {expanded && (
+        <div className="px-2.5 pb-2.5 pt-1 border-t border-gray-100">
+          {/* Status info */}
+          {isLastSlot && (
+            <p className="text-[10px] text-amber-500 mb-1.5">⏱ Laatste slot (30 min)</p>
+          )}
+
+          {/* Comment display */}
+          {comment && !showComment && (
+            <p className="text-[10px] text-gray-500 italic mb-2 flex items-start gap-1">
+              <span>💬</span> {comment}
+            </p>
+          )}
+
+          {/* Comment input */}
+          {showComment && (
+            <div className="flex gap-1.5 mb-2">
+              <input
+                type="text"
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                placeholder="Opmerking..."
+                className="flex-1 text-xs px-2 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-padel-green"
+                autoFocus
+                onClick={e => e.stopPropagation()}
+              />
+              <button
+                onClick={(e) => { e.stopPropagation(); handleCommentSave() }}
+                className="text-xs px-2.5 py-1.5 bg-padel-blue text-white rounded-lg font-medium"
+              >
+                OK
+              </button>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex gap-1.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowComment(!showComment) }}
+              className="text-[10px] px-3 py-1.5 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors font-medium"
+            >
+              💬 Opmerking
+            </button>
+
+            {isMatch && (
+              <button
+                onClick={handleFinalize}
+                className={`
+                  text-[10px] px-3 py-1.5 rounded-lg font-semibold transition-colors
+                  ${isFinalized
+                    ? 'bg-padel-blue text-white hover:bg-padel-blue-light'
+                    : 'bg-padel-blue/10 text-padel-blue hover:bg-padel-blue/20'
+                  }
+                `}
+              >
+                {isFinalized ? '✓ Definitief' : '🔒 Bevestig'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+})
+
+export default TimeSlot

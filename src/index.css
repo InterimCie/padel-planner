@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-padel-green: #22c55e;
+  --color-padel-green-light: #86efac;
+  --color-padel-green-dark: #15803d;
+  --color-padel-blue: #1e3a5f;
+  --color-padel-blue-light: #2d5a8e;
+  --color-padel-blue-dark: #0f1f33;
+  --color-padel-yellow: #facc15;
+}
+
+/* Confirmation pulse animation for newly booked slots */
+@keyframes slot-confirm {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.1); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+.animate-slot-confirm {
+  animation: slot-confirm 0.5s ease-out;
+}
