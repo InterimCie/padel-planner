@@ -14,15 +14,22 @@ import {
   startOfDay,
 } from 'date-fns'
 import { nl } from 'date-fns/locale'
+import { useRef, useCallback } from 'react'
 
 const WEEKDAYS = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo']
 
-export default function Calendar({ selectedDate, onSelectDate, signups }) {
+// Minimum movement in px before we consider it a scroll (not a tap)
+const SCROLL_THRESHOLD = 8
+
+export default function Calendar({ selectedDate, onSelectDate, onChangeMonth, signups }) {
   const today = new Date()
   const monthStart = startOfMonth(selectedDate || today)
   const monthEnd = endOfMonth(monthStart)
   const calStart = startOfWeek(monthStart, { weekStartsOn: 1 })
   const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
+
+  // Track touch start position to distinguish tap vs scroll
+  const touchStartRef = useRef(null)
 
   const days = []
   let day = calStart
@@ -52,71 +59,123 @@ export default function Calendar({ selectedDate, onSelectDate, signups }) {
     return false
   }
 
+  // Touch handlers to prevent accidental selection while scrolling
+  const handleTouchStart = useCallback((e) => {
+    const touch = e.touches[0]
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY }
+  }, [])
+
+  const handleTouchEnd = useCallback((e, date) => {
+    if (!touchStartRef.current) return
+    const touch = e.changedTouches[0]
+    const dx = Math.abs(touch.clientX - touchStartRef.current.x)
+    const dy = Math.abs(touch.clientY - touchStartRef.current.y)
+    touchStartRef.current = null
+    // Only select if finger didn't move (real tap, not scroll)
+    if (dx < SCROLL_THRESHOLD && dy < SCROLL_THRESHOLD) {
+      onSelectDate(date)
+    }
+  }, [onSelectDate])
+
+  // For month nav, only change displayed month (not navigate to day)
+  function handlePrevMonth() {
+    const prev = subMonths(monthStart, 1)
+    onChangeMonth(prev)
+  }
+
+  function handleNextMonth() {
+    const next = addMonths(monthStart, 1)
+    onChangeMonth(next)
+  }
+
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-4">
-      {/* Month navigation */}
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={() => onSelectDate(subMonths(selectedDate || today, 1))}
-          className="p-2 rounded-lg hover:bg-gray-100 text-padel-blue font-bold text-xl transition-colors"
-        >
-          &larr;
-        </button>
-        <h2 className="text-lg font-bold text-padel-blue capitalize">
-          {format(monthStart, 'MMMM yyyy', { locale: nl })}
-        </h2>
-        <button
-          onClick={() => onSelectDate(addMonths(selectedDate || today, 1))}
-          className="p-2 rounded-lg hover:bg-gray-100 text-padel-blue font-bold text-xl transition-colors"
-        >
-          &rarr;
-        </button>
-      </div>
+    <div className="flex">
+      <div className="bg-white rounded-2xl shadow-lg p-4 w-[90%]">
+        {/* Month navigation */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={handlePrevMonth}
+            className="p-2 rounded-lg hover:bg-gray-100 text-padel-blue font-bold text-xl transition-colors"
+          >
+            &larr;
+          </button>
+          <h2 className="text-sm font-bold text-padel-blue capitalize">
+            {format(monthStart, 'MMM yyyy', { locale: nl })}
+          </h2>
+          <button
+            onClick={handleNextMonth}
+            className="p-2 rounded-lg hover:bg-gray-100 text-padel-blue font-bold text-xl transition-colors"
+          >
+            &rarr;
+          </button>
+        </div>
 
-      {/* Weekday headers */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {WEEKDAYS.map(wd => (
-          <div key={wd} className="text-center text-xs font-semibold text-gray-400 py-1">
-            {wd}
-          </div>
-        ))}
-      </div>
+        {/* Instruction */}
+        <p className="text-center text-[10px] text-gray-400 mb-2">
+          Tik op een datum
+        </p>
 
-      {/* Day cells */}
-      <div className="grid grid-cols-7 gap-1">
-        {days.map((d, i) => {
-          const inMonth = isSameMonth(d, monthStart)
-          const isPast = isBefore(d, startOfDay(today))
-          const selected = selectedDate && isSameDay(d, selectedDate)
-          const todayFlag = isToday(d)
-          const playerCount = getSlotCountForDay(d)
-          const hasMatch = hasMatchOnDay(d)
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {WEEKDAYS.map(wd => (
+            <div key={wd} className="text-center text-[10px] font-semibold text-gray-400 py-0.5">
+              {wd}
+            </div>
+          ))}
+        </div>
 
-          return (
-            <button
-              key={i}
-              onClick={() => !isPast && inMonth && onSelectDate(d)}
-              disabled={isPast || !inMonth}
-              className={`
-                relative aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium transition-all
-                ${!inMonth ? 'text-gray-200 cursor-default' : ''}
-                ${inMonth && isPast ? 'text-gray-300 cursor-default' : ''}
-                ${inMonth && !isPast && !selected ? 'text-padel-blue hover:bg-padel-green-light/30 cursor-pointer' : ''}
-                ${selected ? 'bg-padel-blue text-white shadow-md' : ''}
-                ${todayFlag && !selected ? 'ring-2 ring-padel-green' : ''}
-                ${hasMatch && !selected ? 'bg-padel-green/20' : ''}
-              `}
-            >
-              <span>{format(d, 'd')}</span>
-              {playerCount > 0 && inMonth && (
-                <span className={`text-[10px] leading-none mt-0.5 ${selected ? 'text-padel-green-light' : 'text-padel-green-dark'}`}>
-                  {playerCount}p
-                </span>
-              )}
-            </button>
-          )
-        })}
+        {/* Day cells */}
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((d, i) => {
+            const inMonth = isSameMonth(d, monthStart)
+            const isPast = isBefore(d, startOfDay(today))
+            const isActive = inMonth && !isPast
+            const selected = selectedDate && isSameDay(d, selectedDate)
+            const todayFlag = isToday(d)
+            const playerCount = getSlotCountForDay(d)
+            const hasMatch = hasMatchOnDay(d)
+
+            return (
+              <div
+                key={i}
+                className="flex items-center justify-center"
+              >
+                <button
+                  onClick={(e) => {
+                    if (e.detail > 0 && isActive) onSelectDate(d)
+                  }}
+                  onTouchStart={isActive ? handleTouchStart : undefined}
+                  onTouchEnd={isActive ? (e) => { e.preventDefault(); handleTouchEnd(e, d) } : undefined}
+                  disabled={!isActive}
+                  className={`
+                    w-full aspect-square flex flex-col items-center justify-center rounded-lg text-xs font-semibold transition-all
+                    ${!inMonth ? 'text-gray-200 cursor-default' : ''}
+                    ${inMonth && isPast ? 'text-gray-300 cursor-default' : ''}
+                    ${isActive && !selected ? 'text-padel-blue hover:bg-padel-green-light/30 active:scale-95 cursor-pointer border border-transparent hover:border-padel-green/40' : ''}
+                    ${selected ? 'bg-padel-blue text-white shadow-md border border-padel-blue' : ''}
+                    ${todayFlag && !selected ? 'ring-2 ring-padel-green ring-offset-1' : ''}
+                    ${hasMatch && !selected ? 'bg-padel-green/20 border border-padel-green/40' : ''}
+                  `}
+                >
+                  <span>{format(d, 'd')}</span>
+                  {playerCount > 0 && inMonth && (
+                    <span className={`text-[8px] leading-none mt-0.5 font-bold ${selected ? 'text-padel-green-light' : 'text-padel-green-dark'}`}>
+                      {playerCount}p
+                    </span>
+                  )}
+                  {hasMatch && !selected && (
+                    <span className="text-[7px] leading-none text-padel-green-dark font-bold">
+                      ✓
+                    </span>
+                  )}
+                </button>
+              </div>
+            )
+          })}
+        </div>
       </div>
+      {/* Empty right zone for easy scrolling on mobile */}
+      <div className="w-[10%]" />
     </div>
   )
 }

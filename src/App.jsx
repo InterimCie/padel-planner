@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import NameEntry from './components/NameEntry'
+import HomePage from './components/HomePage'
 import Calendar from './components/Calendar'
 import DayView from './components/DayView'
 import { useSlotData } from './hooks/useSlotData'
 
+// Views: 'home' | 'calendar' | 'day'
 export default function App() {
   const [playerName, setPlayerName] = useState(() => {
     return localStorage.getItem('padel-player-name') || ''
   })
+  const [view, setView] = useState('home')
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [viewingDay, setViewingDay] = useState(null)
 
@@ -16,28 +19,44 @@ export default function App() {
     comments,
     finalized,
     loading,
-    toggleSignup,
     batchToggleSignup,
     setComment,
+    setBatchComment,
     toggleFinalized,
   } = useSlotData()
+
+  function handleGoToCalendar() {
+    setView('calendar')
+  }
 
   function handleSelectDate(date) {
     setSelectedDate(date)
     setViewingDay(date)
+    setView('day')
   }
 
-  function handleBack() {
+  function handleChangeMonth(date) {
+    setSelectedDate(date)
+  }
+
+  function handleBackToCalendar() {
+    setView('calendar')
     setViewingDay(null)
+  }
+
+  function handleNavigateDay(date) {
+    setViewingDay(date)
+    setSelectedDate(date)
   }
 
   function handleChangeName() {
     localStorage.removeItem('padel-player-name')
     setPlayerName('')
+    setView('home')
   }
 
   if (!playerName) {
-    return <NameEntry onNameSet={setPlayerName} />
+    return <NameEntry onNameSet={(name) => { setPlayerName(name); setView('home') }} />
   }
 
   if (loading) {
@@ -55,10 +74,13 @@ export default function App() {
     <div className="min-h-screen bg-gray-50">
       {/* Top bar */}
       <header className="bg-padel-blue text-white px-4 py-3 flex items-center justify-between sticky top-0 z-10 shadow-md">
-        <div className="flex items-center gap-2">
+        <button
+          onClick={() => setView('home')}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
           <span className="text-xl">🎾</span>
           <h1 className="font-bold text-lg">Padel Planner</h1>
-        </div>
+        </button>
         <button
           onClick={handleChangeName}
           className="flex items-center gap-1.5 text-sm bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg transition-colors"
@@ -70,7 +92,23 @@ export default function App() {
 
       {/* Content */}
       <main className="max-w-lg mx-auto p-4 pb-8">
-        {viewingDay ? (
+        {view === 'home' && (
+          <HomePage
+            playerName={playerName}
+            onGoToCalendar={handleGoToCalendar}
+          />
+        )}
+
+        {view === 'calendar' && (
+          <Calendar
+            selectedDate={selectedDate}
+            onSelectDate={handleSelectDate}
+            onChangeMonth={handleChangeMonth}
+            signups={signups}
+          />
+        )}
+
+        {view === 'day' && viewingDay && (
           <DayView
             date={viewingDay}
             currentPlayer={playerName}
@@ -79,40 +117,11 @@ export default function App() {
             finalized={finalized}
             onBatchToggleSignup={batchToggleSignup}
             onSetComment={setComment}
+            onBatchSetComment={setBatchComment}
             onToggleFinalized={toggleFinalized}
-            onBack={handleBack}
+            onBack={handleBackToCalendar}
+            onNavigateDay={handleNavigateDay}
           />
-        ) : (
-          <>
-            <Calendar
-              selectedDate={selectedDate}
-              onSelectDate={handleSelectDate}
-              signups={signups}
-            />
-
-            {/* Legend */}
-            <div className="mt-4 bg-white rounded-xl p-4 shadow-sm">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Legenda</h3>
-              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-padel-green/20 ring-1 ring-padel-green/40" />
-                  Match beschikbaar
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-padel-blue ring-1 ring-padel-blue" />
-                  Geselecteerde dag
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full ring-2 ring-padel-green bg-white" />
-                  Vandaag
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-padel-green-dark font-medium">3p</span>
-                  Aantal spelers
-                </div>
-              </div>
-            </div>
-          </>
         )}
       </main>
     </div>

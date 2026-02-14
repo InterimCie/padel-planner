@@ -228,6 +228,28 @@ export function useSlotData() {
     }
   }, [signups])
 
+  const setBatchComment = useCallback(async (slotKeys, comment) => {
+    if (!slotKeys.length || !comment?.trim()) return
+
+    // Optimistic UI: set comment on all slots at once
+    setComments(prev => {
+      const updated = { ...prev }
+      for (const key of slotKeys) {
+        updated[key] = comment
+      }
+      return updated
+    })
+
+    if (supabase) {
+      const rows = slotKeys.map(key => ({
+        slot_key: key,
+        comment,
+        updated_at: new Date().toISOString(),
+      }))
+      await supabase.from('slot_comments').upsert(rows)
+    }
+  }, [])
+
   return {
     signups,
     comments,
@@ -236,6 +258,7 @@ export function useSlotData() {
     toggleSignup,
     batchToggleSignup,
     setComment,
+    setBatchComment,
     toggleFinalized,
   }
 }
