@@ -90,7 +90,7 @@ export default function Calendar({ selectedDate, onSelectDate, onChangeMonth, si
 
   return (
     <div className="flex">
-      <div className="bg-white rounded-2xl shadow-lg p-4 w-[90%]">
+      <div className="bg-white rounded-2xl shadow-lg p-4 w-1/2">
         {/* Month navigation */}
         <div className="flex items-center justify-between mb-4">
           <button
@@ -175,7 +175,7 @@ export default function Calendar({ selectedDate, onSelectDate, onChangeMonth, si
         </div>
       </div>
       {/* Empty right zone for easy scrolling on mobile */}
-      <div className="w-[10%]" />
+      <div className="w-1/2" />
     </div>
   )
 }
