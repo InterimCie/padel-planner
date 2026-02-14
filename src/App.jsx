@@ -91,7 +91,7 @@ export default function App() {
       </header>
 
       {/* Content */}
-      <main className="max-w-lg mx-auto p-4 pb-8">
+      <main className="px-2 py-4 pb-8">
         {view === 'home' && (
           <HomePage
             playerName={playerName}
