@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import NameEntry from './components/NameEntry'
 import HomePage from './components/HomePage'
 import Calendar from './components/Calendar'
@@ -23,7 +23,16 @@ export default function App() {
     setComment,
     setBatchComment,
     toggleFinalized,
+    clearAllSignups,
   } = useSlotData()
+
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const isAdmin = playerName.toLowerCase() === 'angele'
+
+  const handleClearAll = useCallback(async () => {
+    await clearAllSignups()
+    setShowClearConfirm(false)
+  }, [clearAllSignups])
 
   function handleGoToCalendar() {
     setView('calendar')
@@ -89,6 +98,36 @@ export default function App() {
           <span className="text-white/60 text-xs">wijzig</span>
         </button>
       </header>
+
+      {/* Admin: clear all button */}
+      {isAdmin && (
+        <div className="px-4 py-2 bg-red-50 border-b border-red-100">
+          {!showClearConfirm ? (
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              className="text-xs text-red-500 font-medium hover:text-red-700 transition-colors"
+            >
+              🗑 Alle boekingen wissen
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-red-600 font-medium">Weet je het zeker?</span>
+              <button
+                onClick={handleClearAll}
+                className="text-xs px-3 py-1.5 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors"
+              >
+                Ja, alles wissen
+              </button>
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                className="text-xs px-3 py-1.5 rounded-lg bg-gray-200 text-gray-600 font-medium hover:bg-gray-300 transition-colors"
+              >
+                Annuleren
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Content */}
       <main className="px-2 py-4 pb-8">

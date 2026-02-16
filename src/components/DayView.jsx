@@ -49,6 +49,9 @@ export default function DayView({
   const [blockComment, setBlockComment] = useState('')
   const commentBarRef = useRef(null)
 
+  // State for delete confirmation
+  const [confirmDeleteSlots, setConfirmDeleteSlots] = useState(null) // slotKeys[] or null
+
   const today = new Date()
   const canGoPrev = !isBefore(subDays(date, 1), startOfDay(today))
 
@@ -94,10 +97,11 @@ export default function DayView({
     }
   }, [lastBookedSlots])
 
-  // Clear comment bar when navigating to a different day
+  // Clear comment bar and delete confirmation when navigating to a different day
   useEffect(() => {
     setLastBookedSlots([])
     setBlockComment('')
+    setConfirmDeleteSlots(null)
   }, [date])
 
   // --- Direct booking helpers ---
@@ -192,15 +196,41 @@ export default function DayView({
   }
 
   // Tap = book 1 hour (this + next 30-min slot)
+  // If already booked: show delete confirmation instead
   function handleSingleSlotTap(slotKey) {
     if (finalized[slotKey]) return
     const idx = slotKeys.indexOf(slotKey)
     if (idx === -1) return
+
+    const isSignedUp = (signups[slotKey] || []).includes(currentPlayer)
+
+    if (isSignedUp) {
+      // Collect all consecutive slots where this player is signed up
+      const slotsToDelete = [slotKey]
+      // Check next slot too (since booking is 1 hour = 2 slots)
+      if (idx < slotKeys.length - 1 && (signups[slotKeys[idx + 1]] || []).includes(currentPlayer)) {
+        slotsToDelete.push(slotKeys[idx + 1])
+      }
+      setConfirmDeleteSlots(slotsToDelete)
+      return
+    }
+
     const keysToToggle = [slotKey]
     if (idx < slotKeys.length - 1 && !finalized[slotKeys[idx + 1]]) {
       keysToToggle.push(slotKeys[idx + 1])
     }
     bookSlots(keysToToggle)
+  }
+
+  function handleConfirmDelete() {
+    if (confirmDeleteSlots && confirmDeleteSlots.length > 0) {
+      onBatchToggleSignup(confirmDeleteSlots, currentPlayer)
+    }
+    setConfirmDeleteSlots(null)
+  }
+
+  function handleCancelDelete() {
+    setConfirmDeleteSlots(null)
   }
 
   // Quick-select a preset time range
@@ -310,6 +340,30 @@ export default function DayView({
           )
         })}
       </div>
+
+      {/* Delete confirmation bar */}
+      {confirmDeleteSlots && (
+        <div className="sticky bottom-0 left-0 right-0 mt-3 bg-white rounded-2xl shadow-2xl border border-red-300 p-4 z-20">
+          <p className="text-xs text-gray-600 mb-2">
+            Boeking verwijderen voor {timeFromKey(confirmDeleteSlots[0])}
+            {confirmDeleteSlots.length > 1 && ` – ${timeFromKey(confirmDeleteSlots[confirmDeleteSlots.length - 1])}`}?
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={handleCancelDelete}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 font-semibold text-sm hover:bg-gray-200 transition-colors"
+            >
+              Annuleren
+            </button>
+            <button
+              onClick={handleConfirmDelete}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-colors"
+            >
+              Verwijderen
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Comment bar - appears after booking multiple slots */}
       {lastBookedSlots.length > 0 && (

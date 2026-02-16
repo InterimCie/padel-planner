@@ -250,6 +250,25 @@ export function useSlotData() {
     }
   }, [])
 
+  const clearAllSignups = useCallback(async () => {
+    // Clear local state
+    setSignups({})
+    setComments({})
+    setFinalized({})
+
+    // Clear localStorage
+    localStorage.removeItem(LOCAL_STORAGE_KEY)
+
+    // Clear Supabase
+    if (supabase) {
+      await Promise.all([
+        supabase.from('slot_signups').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        supabase.from('slot_comments').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        supabase.from('slot_finalized').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+      ])
+    }
+  }, [])
+
   return {
     signups,
     comments,
@@ -260,5 +279,6 @@ export function useSlotData() {
     setComment,
     setBatchComment,
     toggleFinalized,
+    clearAllSignups,
   }
 }
