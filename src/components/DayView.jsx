@@ -273,46 +273,42 @@ export default function DayView({
         </div>
       )}
 
-      {/* Time slots container - narrow left column so right side is free for scrolling */}
-      <div className="flex">
-        <div
-          ref={containerRef}
-          className="space-y-1 select-none w-1/2"
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}
-          onMouseLeave={() => {
-            if (touchStartSlotRef.current) {
-              cancelDrag()
-              touchStartSlotRef.current = null
-            }
-          }}
-          style={{ touchAction: 'pan-x' }}
-        >
-          {TIME_SLOTS.map((time, idx) => {
-            const slotKey = slotKeys[idx]
-            return (
-              <TimeSlot
-                key={slotKey}
-                slotKey={slotKey}
-                time={time}
-                players={signups[slotKey] || []}
-                comment={comments[slotKey] || ''}
-                finalizedInfo={finalized[slotKey]}
-                currentPlayer={currentPlayer}
-                onSetComment={onSetComment}
-                onToggleFinalized={onToggleFinalized}
-                isInSelection={isInSelection(slotKey)}
-                registerRef={registerSlotRef}
-                isLastSlot={idx === slotKeys.length - 1}
-              />
-            )
-          })}
-        </div>
-        {/* Empty right zone for easy scrolling on mobile */}
-        <div className="w-1/2" />
+      {/* Time slots container */}
+      <div
+        ref={containerRef}
+        className="space-y-1 select-none w-1/2"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={() => {
+          if (touchStartSlotRef.current) {
+            cancelDrag()
+            touchStartSlotRef.current = null
+          }
+        }}
+        style={{ touchAction: 'pan-x' }}
+      >
+        {TIME_SLOTS.map((time, idx) => {
+          const slotKey = slotKeys[idx]
+          return (
+            <TimeSlot
+              key={slotKey}
+              slotKey={slotKey}
+              time={time}
+              players={signups[slotKey] || []}
+              comment={comments[slotKey] || ''}
+              finalizedInfo={finalized[slotKey]}
+              currentPlayer={currentPlayer}
+              onSetComment={onSetComment}
+              onToggleFinalized={onToggleFinalized}
+              isInSelection={isInSelection(slotKey)}
+              registerRef={registerSlotRef}
+              isLastSlot={idx === slotKeys.length - 1}
+            />
+          )
+        })}
       </div>
 
       {/* Comment bar - appears after booking multiple slots */}
