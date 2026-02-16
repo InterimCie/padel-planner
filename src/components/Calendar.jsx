@@ -90,7 +90,7 @@ export default function Calendar({ selectedDate, onSelectDate, onChangeMonth, si
 
   return (
     <div>
-      <div className="bg-white rounded-2xl shadow-lg p-4">
+      <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 min-h-[calc(100vh-10rem)]">
         {/* Month navigation */}
         <div className="flex items-center justify-between mb-4">
           <button
@@ -99,7 +99,7 @@ export default function Calendar({ selectedDate, onSelectDate, onChangeMonth, si
           >
             &larr;
           </button>
-          <h2 className="text-sm font-bold text-padel-blue capitalize">
+          <h2 className="text-xl font-bold text-padel-blue capitalize">
             {format(monthStart, 'MMM yyyy', { locale: nl })}
           </h2>
           <button
@@ -111,21 +111,21 @@ export default function Calendar({ selectedDate, onSelectDate, onChangeMonth, si
         </div>
 
         {/* Instruction */}
-        <p className="text-center text-[10px] text-gray-400 mb-2">
+        <p className="text-center text-xs text-gray-400 mb-2">
           Tik op een datum
         </p>
 
         {/* Weekday headers */}
-        <div className="grid grid-cols-7 gap-1 mb-1">
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2 mb-1">
           {WEEKDAYS.map(wd => (
-            <div key={wd} className="text-center text-[10px] font-semibold text-gray-400 py-0.5">
+            <div key={wd} className="text-center text-sm font-semibold text-gray-400 py-0.5">
               {wd}
             </div>
           ))}
         </div>
 
         {/* Day cells */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2 flex-1">
           {days.map((d, i) => {
             const inMonth = isSameMonth(d, monthStart)
             const isPast = isBefore(d, startOfDay(today))
@@ -148,7 +148,7 @@ export default function Calendar({ selectedDate, onSelectDate, onChangeMonth, si
                   onTouchEnd={isActive ? (e) => { e.preventDefault(); handleTouchEnd(e, d) } : undefined}
                   disabled={!isActive}
                   className={`
-                    w-full aspect-square flex flex-col items-center justify-center rounded-lg text-xs font-semibold transition-all
+                    w-full aspect-square flex flex-col items-center justify-center rounded-lg text-base font-semibold transition-all
                     ${!inMonth ? 'text-gray-200 cursor-default' : ''}
                     ${inMonth && isPast ? 'text-gray-300 cursor-default' : ''}
                     ${isActive && !selected ? 'text-padel-blue hover:bg-padel-green-light/30 active:scale-95 cursor-pointer border border-transparent hover:border-padel-green/40' : ''}
@@ -159,12 +159,12 @@ export default function Calendar({ selectedDate, onSelectDate, onChangeMonth, si
                 >
                   <span>{format(d, 'd')}</span>
                   {playerCount > 0 && inMonth && (
-                    <span className={`text-[8px] leading-none mt-0.5 font-bold ${selected ? 'text-padel-green-light' : 'text-padel-green-dark'}`}>
+                    <span className={`text-[10px] leading-none mt-0.5 font-bold ${selected ? 'text-padel-green-light' : 'text-padel-green-dark'}`}>
                       {playerCount}p
                     </span>
                   )}
                   {hasMatch && !selected && (
-                    <span className="text-[7px] leading-none text-padel-green-dark font-bold">
+                    <span className="text-[9px] leading-none text-padel-green-dark font-bold">
                       ✓
                     </span>
                   )}

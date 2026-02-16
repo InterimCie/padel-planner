@@ -109,14 +109,8 @@ export default function DayView({
     const bookableKeys = keys.filter(key => !finalized[key])
     if (bookableKeys.length > 0) {
       onBatchToggleSignup(bookableKeys, currentPlayer)
-      // Show comment bar for multi-slot bookings (only when adding, not removing)
-      const isAdding = !(signups[bookableKeys[0]] || []).includes(currentPlayer)
-      if (isAdding && bookableKeys.length > 1) {
-        setLastBookedSlots(bookableKeys)
-        setBlockComment('')
-      } else {
-        setLastBookedSlots([])
-      }
+      // No automatic comment bar — user can add comment via second click
+      setLastBookedSlots([])
     }
   }
 
@@ -225,6 +219,14 @@ export default function DayView({
   function handleConfirmDelete() {
     if (confirmDeleteSlots && confirmDeleteSlots.length > 0) {
       onBatchToggleSignup(confirmDeleteSlots, currentPlayer)
+    }
+    setConfirmDeleteSlots(null)
+  }
+
+  function handleAddCommentFromPopup() {
+    if (confirmDeleteSlots && confirmDeleteSlots.length > 0) {
+      setLastBookedSlots(confirmDeleteSlots)
+      setBlockComment('')
     }
     setConfirmDeleteSlots(null)
   }
@@ -341,25 +343,31 @@ export default function DayView({
         })}
       </div>
 
-      {/* Delete confirmation bar */}
+      {/* Action popup for already-booked slots */}
       {confirmDeleteSlots && (
-        <div className="sticky bottom-0 left-0 right-0 mt-3 bg-white rounded-2xl shadow-2xl border border-red-300 p-4 z-20">
-          <p className="text-xs text-gray-600 mb-2">
-            Boeking verwijderen voor {timeFromKey(confirmDeleteSlots[0])}
-            {confirmDeleteSlots.length > 1 && ` – ${timeFromKey(confirmDeleteSlots[confirmDeleteSlots.length - 1])}`}?
+        <div className="sticky bottom-0 left-0 right-0 mt-3 bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 z-20">
+          <p className="text-xs text-gray-600 mb-3">
+            {timeFromKey(confirmDeleteSlots[0])}
+            {confirmDeleteSlots.length > 1 && ` – ${timeFromKey(confirmDeleteSlots[confirmDeleteSlots.length - 1])}`}
           </p>
           <div className="flex gap-2">
             <button
-              onClick={handleCancelDelete}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 font-semibold text-sm hover:bg-gray-200 transition-colors"
+              onClick={handleAddCommentFromPopup}
+              className="flex-1 px-3 py-2.5 rounded-xl bg-padel-blue/10 text-padel-blue font-semibold text-sm hover:bg-padel-blue/20 transition-colors"
             >
-              Annuleren
+              💬 Opmerking
             </button>
             <button
               onClick={handleConfirmDelete}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-colors"
+              className="flex-1 px-3 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-colors"
             >
               Verwijderen
+            </button>
+            <button
+              onClick={handleCancelDelete}
+              className="flex-1 px-3 py-2.5 rounded-xl bg-gray-100 text-gray-600 font-semibold text-sm hover:bg-gray-200 transition-colors"
+            >
+              Annuleren
             </button>
           </div>
         </div>
