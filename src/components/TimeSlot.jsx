@@ -52,63 +52,67 @@ const TimeSlot = memo(function TimeSlot({
     bgClass = 'bg-amber-50 border-amber-200/50'
   }
 
+  // Truncate name to 15 chars
+  function truncName(name) {
+    return name.length > 15 ? name.slice(0, 15) + '\u2026' : name
+  }
+
   return (
     <div
       ref={refCallback}
       data-slot-key={slotKey}
       className={`border rounded-lg transition-all ${bgClass} ${isHalfHour ? 'border-l-2 border-l-gray-200/60' : 'border-l-4 border-l-padel-blue/30'}`}
     >
-      {/* Compact row - always visible */}
-      <div className="flex items-center gap-2 px-2.5 py-2">
+      {/* Compact row: time | names stacked | badges */}
+      <div className="flex items-start gap-1.5 px-2 py-1.5">
         {/* Time */}
-        <span className={`font-mono text-xs w-11 shrink-0 ${isHalfHour ? 'text-gray-400 font-normal' : 'text-padel-blue font-bold'}`}>
+        <span className={`font-mono text-[11px] w-10 shrink-0 pt-0.5 ${isHalfHour ? 'text-gray-400 font-normal' : 'text-padel-blue font-bold'}`}>
           {time}
         </span>
 
-        {/* Player chips - inline */}
-        <div className="flex flex-wrap gap-1 flex-1 min-w-0">
-          {players.map(name => (
-            <span
-              key={name}
-              className={`
-                text-[10px] px-2 py-0.5 rounded-full font-medium truncate max-w-[80px]
-                ${name === currentPlayer
-                  ? 'bg-padel-green text-white'
-                  : 'bg-gray-100 text-gray-600'
-                }
-              `}
-            >
-              {name}
-            </span>
-          ))}
-          {playerCount === 0 && !isFinalized && (
-            <span className="text-[10px] text-gray-300 italic">Vrij</span>
+        {/* Names stacked vertically */}
+        <div className="flex-1 min-w-0">
+          {players.length > 0 ? (
+            players.map(name => (
+              <div
+                key={name}
+                className={`text-[11px] leading-tight truncate ${
+                  name === currentPlayer
+                    ? 'text-padel-green font-semibold'
+                    : 'text-gray-600'
+                }`}
+              >
+                {truncName(name)}
+              </div>
+            ))
+          ) : (
+            <span className="text-[11px] text-gray-300 italic leading-tight">{'\u2014'}</span>
           )}
         </div>
 
-        {/* Badges + count */}
-        <div className="flex items-center gap-1 shrink-0">
+        {/* Minimal badges */}
+        <div className="flex items-center gap-0.5 shrink-0 pt-0.5">
           {comment && !expanded && (
-            <span className="text-[10px]">💬</span>
+            <span className="text-[9px]">💬</span>
           )}
           {isFinalized && (
-            <span className="text-[8px] bg-padel-blue text-white px-1.5 py-0.5 rounded-full font-bold leading-none">
+            <span className="text-[7px] bg-padel-blue text-white px-1 py-px rounded-full font-bold leading-none">
               DEF
             </span>
           )}
           {isMatch && !isFinalized && (
-            <span className="text-[8px] bg-padel-green text-white px-1.5 py-0.5 rounded-full font-bold leading-none animate-pulse">
-              MATCH
+            <span className="text-[7px] bg-padel-green text-white px-1 py-px rounded-full font-bold leading-none">
+              ✓
             </span>
           )}
-          <span className={`text-[10px] font-medium w-5 text-right ${playerCount >= 4 ? 'text-padel-green-dark' : 'text-gray-300'}`}>
+          <span className={`text-[9px] font-medium w-4 text-right ${playerCount >= 4 ? 'text-padel-green-dark' : 'text-gray-300'}`}>
             {playerCount}/4
           </span>
 
           {/* Expand toggle */}
           <button
             onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
-            className="text-gray-300 hover:text-gray-500 text-[10px] p-0.5 transition-colors"
+            className="text-gray-300 hover:text-gray-500 text-[9px] p-0.5 transition-colors"
           >
             {expanded ? '▲' : '▼'}
           </button>
@@ -117,20 +121,17 @@ const TimeSlot = memo(function TimeSlot({
 
       {/* Expanded details */}
       {expanded && (
-        <div className="px-2.5 pb-2.5 pt-1 border-t border-gray-100">
-          {/* Status info */}
+        <div className="px-2 pb-2 pt-1 border-t border-gray-100">
           {isLastSlot && (
-            <p className="text-[10px] text-amber-500 mb-1.5">⏱ Laatste slot (30 min)</p>
+            <p className="text-[10px] text-amber-500 mb-1.5">⏱ Laatste slot</p>
           )}
 
-          {/* Comment display */}
           {comment && !showComment && (
             <p className="text-[10px] text-gray-500 italic mb-2 flex items-start gap-1">
               <span>💬</span> {comment}
             </p>
           )}
 
-          {/* Comment input */}
           {showComment && (
             <div className="flex gap-1.5 mb-2">
               <input
@@ -151,7 +152,6 @@ const TimeSlot = memo(function TimeSlot({
             </div>
           )}
 
-          {/* Action buttons */}
           <div className="flex gap-1.5">
             <button
               onClick={(e) => { e.stopPropagation(); setShowComment(!showComment) }}
